@@ -1,0 +1,56 @@
+# -*- coding: utf8 -*-
+import urllib.request, urllib.parse
+import os
+from bs4 import BeautifulSoup
+import re
+import shutil
+
+def begin():
+
+    urlinput = str(input('Enter url: '))
+    return urlinput
+
+    #print("Invalid url, try again")
+
+def soup(url):
+    uh = urllib.request.urlopen(url)
+    soup = BeautifulSoup(uh,"html.parser")
+    tags = soup.findAll('a')
+    return tags
+
+
+def get_images(tags, url):
+    links_in_url = []
+    jpg_in_links = []
+    webm_in_links = []
+
+    string = re.findall('(\S*://\S*?)/', url)
+
+    for tag in tags:
+        links_in_url.append(str(tag.get('href', None)))     # was string[0]+ in argument
+
+    for i in range(0,len(links_in_url)) :                   #if link is not start with http add it
+        if not links_in_url[i].startswith("http"):
+            links_in_url.insert(i, (string[0]+str(links_in_url[i])))
+            links_in_url.remove(links_in_url[i+1])
+
+    for tag in links_in_url:                 # for pages
+        if tag.endswith("jpg") or tag.endswith("jpeg") or tag.endswith("gif") or tag.endswith("webm") or tag.endswith("png"):
+            jpg_in_links.append(tag)
+
+
+    links_in_url.clear()
+    print("... Found %d images" %(len(jpg_in_links)))
+    print(jpg_in_links)
+    return jpg_in_links[::2]
+
+
+def save_images(images):
+    for img in images:
+        fullfilename = os.path.join("E:/Python/parse pics/5", img.split('/')[-1])
+
+        with urllib.request.urlopen(img) as response, open(fullfilename, 'wb') as out_file:
+            shutil.copyfileobj(response, out_file)
+
+temporary = begin()
+save_images(get_images(soup(temporary), temporary))
